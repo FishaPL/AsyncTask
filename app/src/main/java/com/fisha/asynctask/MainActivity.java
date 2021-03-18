@@ -1,11 +1,21 @@
 package com.fisha.asynctask;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -14,45 +24,60 @@ public class MainActivity extends AppCompatActivity
     private Button btn;
     private TextView txt;
     private ProgressBar progressBar;
+    private ImageView imageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        imageView = findViewById(R.id.imageView);
         progressBar = findViewById(R.id.progressBar);
         progressBar.setMax(5);
         txt =  findViewById(R.id.output);
         btn = findViewById(R.id.button1);
         btn.setOnClickListener(view -> {
-            txt.setText("Result");
-            progressBar.setProgress(0);
+            DownloadImage();
             new LongOperation(this).execute();
-            //new LongOperationNestedClass().execute();
         });
     }
 
+    private void DownloadImage () {
+        ImageDownloaderNestedClass asyncTask = new ImageDownloaderNestedClass();
+        try {
+            URL url = new URL("https://developer.android.com/codelabs/android-training-create-asynctask/img/3833ce18e9dc9ccc.png");
+            asyncTask.execute(url);
+
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+    }
+
     // AsyncTask<Param, Progress, Result>
-    private class LongOperationNestedClass extends AsyncTask<Void, Integer, String> {
+    private class ImageDownloaderNestedClass extends AsyncTask<URL, Integer, Bitmap> {
 
         @Override
-        protected String doInBackground(Void... params)
+        protected Bitmap doInBackground(URL... params)
         {
-            for (int i = 1; i <= 5; i++) {
-                try {
-                    Thread.sleep(1000);
-                    publishProgress(i);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            try {
+                HttpURLConnection connection = (HttpURLConnection) params[0].openConnection();
+                connection.connect();
+                InputStream inputStream = connection.getInputStream();
+                Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+                return bitmap;
+
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            return "Executed";
+
+            return null;
         }
 
         @Override
-        protected void onPostExecute(String result) {
-            txt.setText(result);
-            Toast.makeText(getApplicationContext(), "AsyncTask finished", Toast.LENGTH_SHORT).show();
+        protected void onPostExecute(Bitmap bitmap) {
+            super.onPostExecute(bitmap);
+            if (bitmap != null)
+                imageView.setImageBitmap(bitmap);
         }
 
         @Override

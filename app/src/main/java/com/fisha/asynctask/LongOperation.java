@@ -6,14 +6,18 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.lang.ref.WeakReference;
+
 public class LongOperation extends AsyncTask<Void, Integer, String>
 {
-    private final Activity activity;
-    private TextView textView;
-    private ProgressBar progressBar;
+    private final WeakReference<Activity> activity;
+    private final WeakReference<TextView> textView;
+    private final WeakReference<ProgressBar> progressBar;
 
     public LongOperation(Activity activity) {
-        this.activity = activity;
+        this.activity = new WeakReference<>(activity);
+        this.textView = new WeakReference<>(activity.findViewById(R.id.output));
+        this.progressBar = new WeakReference<>(activity.findViewById(R.id.progressBar));
     }
 
     @Override
@@ -32,18 +36,18 @@ public class LongOperation extends AsyncTask<Void, Integer, String>
 
     @Override
     protected void onPostExecute(String result) {
-        textView.setText(result);
-        Toast.makeText(activity, "AsyncTask finished", Toast.LENGTH_SHORT).show();
+        textView.get().setText(result);
+        Toast.makeText(activity.get(), "AsyncTask finished", Toast.LENGTH_SHORT).show();
     }
 
     @Override
     protected void onPreExecute() {
-        textView = activity.findViewById(R.id.output);
-        progressBar = activity.findViewById(R.id.progressBar);
+        textView.get().setText("Result");
+        progressBar.get().setProgress(0);
     }
 
     @Override
     protected void onProgressUpdate(Integer... values) {
-        progressBar.setProgress(values[0]);
+        progressBar.get().setProgress(values[0]);
     }
 }
